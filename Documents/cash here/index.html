@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Penghitung Uang Setelah Tutup Kasir</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .main-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            align-items: flex-start;
+        }
+        .container {
+            flex: 1;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .input-section {
+            flex: 1;
+        }
+        .result-section {
+            flex: 1;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .input-group {
+            margin-bottom: 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button {
+            flex: 1;
+            padding: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button.reset {
+            background-color: #e74c3c;
+        }
+        button.reset:hover {
+            background-color: #c0392b;
+        }
+        #hasil {
+            padding-top: 0;
+        }
+        .hasil-item {
+            margin-bottom: 3px;
+        }
+        .total-akhir {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-top: 10px;
+        }
+        .highlight {
+            background-color: #ecf0f1;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="container input-section">
+            <h1>Penghitung Uang Setelah Tutup Kasir</h1>
+            <p>
+                Masukkan jumlah lembar uang tunai Anda.
+            </p>
+            <div id="input-container" class="input-grid" role="form" aria-label="Formulir input jumlah pecahan uang"></div>
+            <div class="button-group">
+                <button onclick="hitungUang()" aria-label="Hitung total uang">Hitung</button>
+                <button class="reset" onclick="resetInput()" aria-label="Reset semua input">Reset</button>
+            </div>
+        </div>
+        <div class="container result-section">
+            <h2>Hasil Perhitungan</h2>
+            <div id="hasil" role="region" aria-live="polite">
+                <p>Hasil akan muncul di sini setelah Anda menekan tombol "Hitung".</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const pecahanUang = [
+            100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100,
+        ];
+        const inputContainer = document.getElementById("input-container");
+        const hasilDiv = document.getElementById("hasil");
+
+        function formatRupiah(number) {
+            return new Intl.NumberFormat("id-ID", {
+                style: "currency",
+                currency: "IDR",
+                minimumFractionDigits: 0,
+            }).format(number);
+        }
+
+        function generateInputFields() {
+            pecahanUang.forEach((pecahan) => {
+                const div = document.createElement("div");
+                div.className = "input-group";
+                div.innerHTML = `
+                    <label for="pecahan-${pecahan}">${formatRupiah(pecahan)}</label>
+                    <input 
+                        type="number" 
+                        id="pecahan-${pecahan}" 
+                        min="0" 
+                        value="0" 
+                        aria-label="Jumlah lembar atau koin untuk pecahan ${formatRupiah(pecahan)}"
+                        oninput="validateInput(this)"
+                    >
+                `;
+                inputContainer.appendChild(div);
+            });
+        }
+
+        function validateInput(input) {
+            if (input.value < 0 || isNaN(input.value)) {
+                input.value = 0;
+            }
+        }
+
+        function resetInput() {
+            pecahanUang.forEach((pecahan) => {
+                const inputElement = document.getElementById(`pecahan-${pecahan}`);
+                inputElement.value = 0;
+            });
+            hasilDiv.innerHTML = `<p>Hasil akan muncul di sini setelah Anda menekan tombol "Hitung".</p>`;
+        }
+
+        generateInputFields();
+
+        function hitungUang() {
+            let totalUang = 0;
+            let uangMasuk = {};
+            hasilDiv.innerHTML = "";
+
+            pecahanUang.forEach((pecahan) => {
+                const inputElement = document.getElementById(`pecahan-${pecahan}`);
+                const jumlah = parseInt(inputElement.value) || 0;
+                uangMasuk[pecahan] = jumlah;
+                totalUang += jumlah * pecahan;
+            });
+
+            const uangDisisihkan = 500000;
+            const sisaUang = totalUang - uangDisisihkan;
+
+            let htmlHasil = `
+                <h2>Ringkasan Perhitungan</h2>
+                <div class="hasil-item">Total uang awal: <strong>${formatRupiah(totalUang)}</strong></div>
+                <div class="hasil-item">Target uang disisihkan: <strong>${formatRupiah(uangDisisihkan)}</strong></div>
+            `;
+
+            if (sisaUang < 0) {
+                htmlHasil += `<div class="total-akhir error">Uang Anda tidak cukup untuk disisihkan ${formatRupiah(
+                    uangDisisihkan
+                )}. Anda kekurangan ${formatRupiah(Math.abs(sisaUang))}.</div>`;
+                hasilDiv.innerHTML = htmlHasil;
+                return;
+            }
+
+            const cariKombinasi = (target, pecahan, stok) => {
+                if (target === 0) return {};
+                if (target < 0 || pecahan.length === 0) return null;
+
+                const pecahanSaatIni = pecahan[pecahan.length - 1];
+                const sisaPecahan = pecahan.slice(0, -1);
+
+                for (let i = stok[pecahanSaatIni] || 0; i >= 0; i--) {
+                    const sisaTarget = target - i * pecahanSaatIni;
+                    const hasilSisa = cariKombinasi(sisaTarget, sisaPecahan, stok);
+                    if (hasilSisa !== null) {
+                        if (i > 0) hasilSisa[pecahanSaatIni] = i;
+                        return hasilSisa;
+                    }
+                }
+                return null;
+            };
+
+            const uangKeluarDisisihkan = cariKombinasi(
+                uangDisisihkan,
+                pecahanUang,
+                uangMasuk
+            );
+
+            if (!uangKeluarDisisihkan) {
+                htmlHasil += `<div class="total-akhir error">Uang Anda tidak memiliki kombinasi pecahan yang pas untuk menyisihkan ${formatRupiah(
+                    uangDisisihkan
+                )}.</div>`;
+                hasilDiv.innerHTML = htmlHasil;
+                return;
+            }
+
+            let uangSisa = {};
+            pecahanUang.forEach((pecahan) => {
+                const jumlahKeluar = uangKeluarDisisihkan[pecahan] || 0;
+                uangSisa[pecahan] = (uangMasuk[pecahan] || 0) - jumlahKeluar;
+            });
+
+            htmlHasil += `
+                <hr>
+                <h2>Rincian Uang yang Disisihkan (${formatRupiah(uangDisisihkan)})</h2>
+                <div class="highlight">
+            `;
+            for (const pecahan of [...pecahanUang].reverse()) {
+                if (uangKeluarDisisihkan[pecahan]) {
+                    htmlHasil += `<div class="hasil-item">${uangKeluarDisisihkan[pecahan]} lembar/koin x ${formatRupiah(
+                        pecahan
+                    )}</div>`;
+                }
+            }
+            htmlHasil += `</div>`;
+
+            htmlHasil += `
+                <h2>Rincian Sisa Uang Akhir</h2>
+                <div class="hasil-item">Sisa uang: <strong>${formatRupiah(sisaUang)}</strong></div>
+                <div class="highlight">
+            `;
+            for (const pecahan of [...pecahanUang].reverse()) {
+                if (uangSisa[pecahan] > 0) {
+                    htmlHasil += `<div class="hasil-item">${uangSisa[pecahan]} lembar/koin x ${formatRupiah(
+                        pecahan
+                    )}</div>`;
+                }
+            }
+            htmlHasil += `</div>`;
+
+            hasilDiv.innerHTML = htmlHasil;
+        }
+    </script>
+</body>
+</html>
